@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        
+        <title>数据显示</title>
+
+        <link href="http://libs.baidu.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+
+        <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+
+        <script src="http://libs.baidu.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+        
+         <!-- 引入 ECharts 文件 -->
+        <script src="echarts.min.js"></script>
+        
+    </head>
+    <body>
+        
+    <div>
+        <div class="container">
+            <div class="row">
+                <br/>
+                <h1>智能路灯数据管理</h1>
+                <hr/>
+                <br/>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-2">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li><a href="mapShow.jsp">地图显示</a></li>
+                        <li><a href="tableShow.jsp">数据详情</a></li>
+                        <li class="active"><a href="figureShow.html">波形显示</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-10">
+                    <div id="echartMain" style="width: 1000px;height: 600px;"></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+        
+<script type="text/javascript">
+	
+myChart=echarts.init(document.getElementById('echartMain'));
+
+//字符串转换为日期时间
+function strToDate(str) {
+ var tempStrs = str.split(" ");
+ var dateStrs = tempStrs[0].split("-");
+ var year = parseInt(dateStrs[0], 10);
+ var month = parseInt(dateStrs[1], 10) - 1;
+ var day = parseInt(dateStrs[2], 10);
+ var timeStrs = tempStrs[1].split("-");
+ var hour = parseInt(timeStrs [0], 10);
+ var minute = parseInt(timeStrs[1], 10) - 1;
+ var second = parseInt(timeStrs[2], 10);
+ var date = new Date(year, month, day, hour, minute, second);
+ return date;
+}
+
+// 指定图表的配置项和数据
+       
+        var option = {
+                    tooltip: {
+                        show: true,
+                        trigger: 'axis',
+                        axisPointer: {
+                            animation: false
+                        }
+                    },
+                    legend: {
+                       data:['电压']
+                    },
+                    xAxis : [
+                        {
+                            type : 'time',
+                            boundaryGap : false,
+                            axisLine: {onZero: false},
+                            data : (function(){
+                                    var arr=[];
+                                        $.ajax({
+                                        type : "post",
+                                        async : false, //同步执行
+                                        url : "ajaxServlet",
+                                        data : {},
+                                        dataType : "json", //返回数据形式为json
+                                        success : function(result) {
+                                        if (result) {
+                                              console.log(result);
+                                               for(var i=0;i<result.length;i++){
+                                                  console.log(result[i].datetime);
+                                                  arr.push(result[i].datetime);
+                                                }
+                                        }
+
+                                    },
+                                    error : function(errorMsg) {
+                                        alert("sorry，请求数据失败");
+                                        myChart.hideLoading();
+                                    }
+                                   })
+                                   return arr;
+                                })()
+                        }
+                    ],
+                    yAxis : [
+                        {
+                            type : 'value',
+                            axisLine: {onZero: false}
+                        }
+                    ],
+                     dataZoom: [
+                            {   // 这个dataZoom组件，默认控制x轴。
+                                type: 'slider', // 这个 dataZoom 组件是 slider 型 dataZoom 组件
+                                start: 70,      // 左边在 70% 的位置。
+                                end: 100         // 右边在 100% 的位置。
+                            }
+                    ],
+                    series : [
+                        {
+                            "name":"电压 / V",
+                            "type":"line",
+                            showSymbol:false,
+                            "data":(function(){
+                                        var arr=[];
+                                        $.ajax({
+                                        type : "post",
+                                        async : false, //同步执行
+                                        url : "ajaxServlet",
+                                        data : {},
+                                        dataType : "json", //返回数据形式为json
+                                        success : function(result) {
+                                        if (result) {
+                                               for(var i=0;i<result.length;i++){
+                                                  console.log(result[i].value);
+                                                  arr.push([(new Date(result[i].datetime)),result[i].value]);
+                                                }
+                                        }
+                                    },
+                                    error : function(errorMsg) {
+                                        alert("sorry，请求数据失败");
+                                        myChart.hideLoading();
+                                    }
+                                   })
+                                  return arr;
+                            })()
+
+                        }
+                    ]
+                };
+        // 使用刚指定的配置项和数据显示图表。
+        myChart.setOption(option);
+        
+        setInterval(function () {
+             myChart.setOption({
+                series: [{
+                    data:(function(){
+                                        var arr=[];
+                                        $.ajax({
+                                        type : "post",
+                                        async : false, //同步执行
+                                        url : "ajaxServlet",
+                                        data : {},
+                                        dataType : "json", //返回数据形式为json
+                                        success : function(result) {
+                                        if (result) {
+                                               for(var i=0;i<result.length;i++){
+                                                  console.log(result[i].value);
+                                                  arr.push([(new Date(result[i].datetime)),result[i].value]);
+                                                }
+                                            }
+                                        },
+                                        error : function(errorMsg) {
+                                            alert("sorry，请求数据失败");
+                                            myChart.hideLoading();
+                                        }
+                                    })
+                                        return arr;
+                            })()
+                }]
+            });
+        }, 15000);
+        
+</script>
+        
+</body>
+    
+</html>
+
